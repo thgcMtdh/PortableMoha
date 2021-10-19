@@ -1,3 +1,10 @@
+# VSCode Settings
+*.vscode
+*.vscode/*
+
+# MacOS File System
+*.DS_Store
+
 # Prerequisites
 *.d
 
