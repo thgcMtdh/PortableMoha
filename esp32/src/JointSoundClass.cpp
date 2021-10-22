@@ -121,8 +121,8 @@ void JointSoundClass::updateMaxMinWheelPosition()
   float minPosition = 1000.0;
   for (int i = 0; i < MAX_WHEEL_NUM; i++) {
     if (wheelArray[i].id < MAX_WHEEL_NUM) {  // wheel i が存在している場合
-      maxPosition = max(wheelArray[i].position, maxPosition);
-      minPosition = min(wheelArray[i].position, minPosition);
+      maxPosition = fmax(wheelArray[i].position, maxPosition);
+      minPosition = fmin(wheelArray[i].position, minPosition);
     }
   }
   _maxWheelPosition = maxPosition;
@@ -217,11 +217,13 @@ int JointSoundClass::generateSound(uint8_t* buf, int len, float speed)
       }
     }
   }
+  return 1;
 }
 
 PlayerClass::PlayerClass(const joint_t* pJoint, const wheel_t* pWheel) :
-  _pJoint(pJoint), _pWheel(pWheel), _buf({0,0,0,0}), _playingSpeed(1.0), _playingPosition(0), _isPlaying(false), _isFinished(false)
+  _pJoint(pJoint), _pWheel(pWheel), _playingSpeed(1.0), _playingPosition(0), _isPlaying(false), _isFinished(false)
 {
+  for (int i = 0; i < sizeof(_buf); i++) _buf[i] = 0x0;
 }
 
 PlayerClass::~PlayerClass()
@@ -261,14 +263,14 @@ uint8_t* PlayerClass::createSample(float speed)
       sample1 = _pJoint->sound->buf[4*i1] << 8 + _pJoint->sound->buf[4*i1 + 1];
       sample2 = _pJoint->sound->buf[4*i2] << 8 + _pJoint->sound->buf[4*i2 + 1];
       result = static_cast<int16_t>((1.0 - _playingPosition) * sample1 + _playingPosition * sample2);
-      _buf[0] = highByte(result);
-      _buf[1] = lowByte(result);
+      _buf[0] = result >> 8;
+      _buf[1] = result & 0xff;
       // R
       sample1 = _pJoint->sound->buf[4*i1 + 2] << 8 + _pJoint->sound->buf[4*i1 + 3];
       sample2 = _pJoint->sound->buf[4*i2 + 2] << 8 + _pJoint->sound->buf[4*i2 + 3];
       result = static_cast<int16_t>((1.0 - _playingPosition) * sample1 + _playingPosition * sample2);
-      _buf[2] = highByte(result);
-      _buf[3] = lowByte(result);
+      _buf[2] = result >> 8;
+      _buf[3] = result & 0xff;
       return _buf;
     }
   }

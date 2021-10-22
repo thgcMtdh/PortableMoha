@@ -1,5 +1,12 @@
 #pragma once
+
+#ifdef ARDUINO_ARCH_ESP32
 #include <Arduino.h>
+#else
+#include <stdint.h>
+#include <stdlib.h>
+#endif
+
 #include <math.h>
 
 #define SAMPLINGRATE 44100
