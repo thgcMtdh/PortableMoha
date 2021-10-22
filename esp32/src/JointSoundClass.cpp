@@ -10,6 +10,15 @@ JointSoundClass::JointSoundClass() :
 
 JointSoundClass::~JointSoundClass()
 {
+  deleteSoundSource();
+  deleteJoint();
+  deleteWheel();
+  for (int p_i = 0; p_i < MAX_PLAYER_NUM; p_i++) {
+    if (pPlayers[p_i] != NULL) {
+      delete pPlayers[p_i];
+      pPlayers[p_i] = NULL;
+    }
+  }
 }
 
 int JointSoundClass::addSoundSource(int id, float speed, float minSpeed, float interceptPitch, float interceptVolume, uint8_t* buf, int len)
