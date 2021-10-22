@@ -269,17 +269,17 @@ uint8_t* PlayerClass::createSample(float speed)
     } else {
       int16_t sample1, sample2, result;
       // L
-      sample1 = _pJoint->sound->buf[4*i1] << 8 + _pJoint->sound->buf[4*i1 + 1];
-      sample2 = _pJoint->sound->buf[4*i2] << 8 + _pJoint->sound->buf[4*i2 + 1];
+      sample1 = *((int16_t*)(&_pJoint->sound->buf[4*i1]));  // 4*i1のアドレスをint16_t型とみなして読み込む
+      sample2 = *((int16_t*)(&_pJoint->sound->buf[4*i2]));
       result = static_cast<int16_t>((1.0 - _playingPosition) * sample1 + _playingPosition * sample2);
-      _buf[0] = result >> 8;
-      _buf[1] = result & 0xff;
+      _buf[0] = result & 0xff;
+      _buf[1] = result >> 8;
       // R
-      sample1 = _pJoint->sound->buf[4*i1 + 2] << 8 + _pJoint->sound->buf[4*i1 + 3];
-      sample2 = _pJoint->sound->buf[4*i2 + 2] << 8 + _pJoint->sound->buf[4*i2 + 3];
+      sample1 = *((int16_t*)(&_pJoint->sound->buf[4*i1 + 2]));
+      sample2 = *((int16_t*)(&_pJoint->sound->buf[4*i2 + 2]));
       result = static_cast<int16_t>((1.0 - _playingPosition) * sample1 + _playingPosition * sample2);
-      _buf[2] = result >> 8;
-      _buf[3] = result & 0xff;
+      _buf[2] = result & 0xff;
+      _buf[3] = result >> 8;
       return _buf;
     }
   }
@@ -294,11 +294,34 @@ uint8_t* PlayerClass::createSample(float speed)
 #ifndef ARDUINO_ARCH_ESP32
 
 // for debug on desktop PC
-
 #include <stdio.h>
 
+JointSoundClass jointSound;
+
+void setup() {
+  // テスト用に正弦波を生成
+  const size_t LEN = 16;
+  uint8_t buf0[4 * LEN];  // ステレオでx2, 16bitなのでx2
+  for (int i=0; i<LEN; i++) {
+    int sinVal = 32767*sin(2.0 * M_PI * i/LEN);
+    int cosVal = 32767*cos(2.0 * M_PI * i/LEN);
+    buf0[4*i]     = sinVal & 0xff;
+    buf0[4*i + 1] = sinVal >> 8;
+    buf0[4*i + 2] = cosVal & 0xff;
+    buf0[4*i + 3] = cosVal >> 8;
+    printf("%d, %d\n", *((int16_t*)(&buf0[4*i])), *((int16_t*)(&buf0[4*i+2])));
+  }
+
+  // jointSound.addSoundSource(0, 24.9, 12.0, 0.5, 1.0);
+}
+
+void loop() {
+
+}
+
 int main() {
-  return 0;
+  setup();
+  loop();
 }
 
 #endif
