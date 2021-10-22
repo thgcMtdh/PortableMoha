@@ -1,7 +1,7 @@
 #include "JointSoundClass.h"
 
-JointSoundClass::JointSoundClass() :
-  _speed(0.0), _loopback(true)
+JointSoundClass::JointSoundClass(const float listeningPointHeight, const bool loopback) :
+  _height(listeningPointHeight), _loopback(loopback)
 {
   deleteSoundSource();
   deleteJoint();
@@ -118,12 +118,6 @@ int JointSoundClass::deleteWheel(int id)
   return 1;
 }
 
-int JointSoundClass::setLoopback(bool loopback)
-{
-  _loopback = loopback;
-  return 1;
-}
-
 void JointSoundClass::updateMaxMinWheelPosition()
 {
   float maxPosition = -1000.0;
@@ -212,7 +206,7 @@ int JointSoundClass::generateSound(uint8_t* buf, int len, float speed)
     int16_t* bufR = (int16_t*)(&buf[4 * s_i + 2]);
     for (int p_i = 0; p_i < MAX_PLAYER_NUM; p_i++) {
       if (pPlayers[p_i] != NULL) {
-        uint8_t* sample = pPlayers[p_i]->createSample(speed);
+        uint8_t* sample = pPlayers[p_i]->createSample(speed, _height);
         *bufL += sample[4 * s_i]     << 8 + sample[4 * s_i + 1];
         *bufR += sample[4 * s_i + 2] << 8 + sample[4 * s_i + 3];
       }
@@ -249,13 +243,17 @@ bool PlayerClass::getIsFinished()
   return _isFinished;
 }
 
-uint8_t* PlayerClass::createSample(float speed)
+uint8_t* PlayerClass::createSample(float speed, float height)
 {
   if (_isPlaying && !_isFinished) {
     // 再生速度(=音の高さ)を計算
     float speedRatio = speed / _pJoint->sound->speed;
-    _playingSpeed = _pJoint->sound->interceptPitch + (1 - _pJoint->sound->interceptPitch) * speedRatio;
-    _playingSpeed *= _pWheel->pitch;
+    _playingSpeed = _pJoint->sound->interceptPitch + (1 - _pJoint->sound->interceptPitch) * speedRatio;  // 音程-速度特性は一次関数を仮定
+    _playingSpeed *= _pWheel->pitch;  // 車輪固有の特性
+
+    // 振幅を計算
+    float amp = height / sqrtf(height*height + _pWheel->position*_pWheel->position);  // 音源からの距離による減衰
+    amp *= _pWheel->volume;  // 隣の車両にあるなど、車輪固有の減衰
 
     // 何サンプル目を再生するかに変換
     _playingPosition += _playingSpeed;
@@ -271,13 +269,13 @@ uint8_t* PlayerClass::createSample(float speed)
       // L
       sample1 = *((int16_t*)(&_pJoint->sound->buf[4*i1]));  // 4*i1のアドレスをint16_t型とみなして読み込む
       sample2 = *((int16_t*)(&_pJoint->sound->buf[4*i2]));
-      result = static_cast<int16_t>((1.0 - _playingPosition) * sample1 + _playingPosition * sample2);
+      result = static_cast<int16_t>(amp * ((1.0 - _playingPosition) * sample1 + _playingPosition * sample2));
       _buf[0] = result & 0xff;
       _buf[1] = result >> 8;
       // R
       sample1 = *((int16_t*)(&_pJoint->sound->buf[4*i1 + 2]));
       sample2 = *((int16_t*)(&_pJoint->sound->buf[4*i2 + 2]));
-      result = static_cast<int16_t>((1.0 - _playingPosition) * sample1 + _playingPosition * sample2);
+      result = static_cast<int16_t>(amp * ((1.0 - _playingPosition) * sample1 + _playingPosition * sample2));
       _buf[2] = result & 0xff;
       _buf[3] = result >> 8;
       return _buf;
@@ -296,7 +294,7 @@ uint8_t* PlayerClass::createSample(float speed)
 // for debug on desktop PC
 #include <stdio.h>
 
-JointSoundClass jointSound;
+// JointSoundClass jointSound;
 
 void setup() {
   // テスト用に正弦波を生成

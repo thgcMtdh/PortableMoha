@@ -67,8 +67,9 @@ public:
 
   /// @brief 速度に応じて、ひとつのサンプルを生成
   /// @param speed 現在の走行速度 [km/h]
+  /// @param height 音源(レール上面を仮定)から聴取点までの距離 [m]
   /// @retval 16-bit stereo PCM 形式のデータ. 符号付16bit整数で、先頭16bitが L, 後方16bitが R.
-  uint8_t* createSample(float speed);
+  uint8_t* createSample(float speed, float height);
 
   const joint_t* _pJoint;  // 生成対象のジョイント
   const wheel_t* _pWheel;  // 生成対象の車輪
@@ -85,7 +86,7 @@ public:
 class JointSoundClass
 {
 public:
-  JointSoundClass();
+  JointSoundClass(const float listenigPointHeight, const bool loopback);
   ~JointSoundClass();
 
   int addSoundSource(int id, float speed, float minSpeed, float interceptPitch, float interceptVolume, uint8_t* buf, int len);
@@ -94,8 +95,6 @@ public:
   int deleteSoundSource(int id=MAX_SOURCE_NUM);
   int deleteJoint(int id=MAX_WHEEL_NUM);
   int deleteWheel(int id=MAX_JOINT_NUM);
-
-  int setLoopback(bool loopback);
 
   void updateMaxMinWheelPosition(void);
 
@@ -106,8 +105,8 @@ public:
   int generateSound(uint8_t* buf, int len, float speed);
 
 private:
-  float _speed;    // train speed [km/h]
-  bool _loopback;  // joint loopback enable flag
+  const float _height;   // distance from sound source to listening point [m]
+  const bool _loopback;  // joint loopback enable flag
   soundSource_t soundSourceArray[MAX_SOURCE_NUM];
   joint_t jointArray[MAX_JOINT_NUM];
   wheel_t wheelArray[MAX_WHEEL_NUM];
