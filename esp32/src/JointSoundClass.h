@@ -3,6 +3,8 @@
 #ifdef ARDUINO_ARCH_ESP32
 #include <Arduino.h>
 #else
+#include <stdio.h>
+#include <string.h>
 #include <stdint.h>
 #include <stdlib.h>
 #endif
@@ -42,8 +44,8 @@ typedef struct _wheel
 typedef struct _joint
 {
   int id;                // user defined ID (must be 0-(MAX_JOINT_NUM-1)). you can add joints with different IDs.
-  soundSource_t* sound;  // pointer to the sound source which is played when a wheel is passing.
   float position;        // joint position when looking from listener.
+  soundSource_t* sound;  // pointer to the sound source which is played when a wheel is passing.
 } joint_t;
 
 
@@ -77,15 +79,15 @@ public:
   uint8_t _buf[4];  // 1サンプルぶんのPCMデータを保存するバッファ. 符号付16bit整数で、先頭16bitが L, 後方16bitが R.
 
   float _playingSpeed;     // 再生速度は元の音源の何倍であるか
-  int _playingPosition;    // 音源の再生位置[サンプル目]
+  float _playingPosition;    // 音源の再生位置[サンプル目]
   bool _isPlaying;         // 現在再生中か？
   bool _isFinished;        // 最後まで再生したか？
 };
 
-/// ジョイント音生成プロセス全体を管理するクラス
 class JointSoundClass
 {
 public:
+  /// ジョイント音生成プロセス全体を管理するクラス
   JointSoundClass(const float listenigPointHeight, const bool loopback);
   ~JointSoundClass();
 
@@ -93,8 +95,8 @@ public:
   int addJoint(int id, int soundId, float position);
   int addWheel(int id, float postion, float pitch=1.0, float volume=1.0);
   int deleteSoundSource(int id=MAX_SOURCE_NUM);
-  int deleteJoint(int id=MAX_WHEEL_NUM);
-  int deleteWheel(int id=MAX_JOINT_NUM);
+  int deleteJoint(int id=MAX_JOINT_NUM);
+  int deleteWheel(int id=MAX_WHEEL_NUM);
 
   void updateMaxMinWheelPosition(void);
 
