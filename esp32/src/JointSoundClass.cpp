@@ -238,8 +238,8 @@ void debug_setup() {
   const size_t SAMPLENUM = 64;
   uint8_t buf0[4 * SAMPLENUM];  // ステレオでx2, 16bitなのでx2
   for (int i=0; i<SAMPLENUM; i++) {
-    int sinVal = 32767*sin(2.0 * M_PI * i/SAMPLENUM);
-    int cosVal = 32767*cos(2.0 * M_PI * i/SAMPLENUM);
+    int sinVal = 32767*sin(2.0 * PI * i/SAMPLENUM);
+    int cosVal = 32767*cos(2.0 * PI * i/SAMPLENUM);
     buf0[4*i]     = sinVal & 0xff;
     buf0[4*i + 1] = sinVal >> 8;
     buf0[4*i + 2] = cosVal & 0xff;

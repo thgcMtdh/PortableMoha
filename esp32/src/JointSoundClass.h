@@ -5,13 +5,14 @@
 #else
 #include <stdio.h>
 #include <stdint.h>
+#include <math.h>
 #endif
 
-#include <math.h>
 #include <vector>
 #include <deque>
 #include <algorithm>
 
+const float PI = 3.14159265358979323846;
 const float SAMPLINGRATE = 44100;
 const float T_SAMPLE = 1 / SAMPLINGRATE;
 
