@@ -6,13 +6,13 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <math.h>
+#define PI 3.1415926535897932384626433832795
 #endif
 
 #include <vector>
 #include <deque>
 #include <algorithm>
 
-const float PI = 3.14159265358979323846;
 const float SAMPLINGRATE = 44100;
 const float T_SAMPLE = 1 / SAMPLINGRATE;
 
