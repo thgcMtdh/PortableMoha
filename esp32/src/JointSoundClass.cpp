@@ -15,7 +15,6 @@ WheelClass::~WheelClass() {}
 JointSoundClass::JointSoundClass(const float listeningPointHeight, const bool loopback) : _height(listeningPointHeight), _loopback(loopback) {}
 JointSoundClass::~JointSoundClass()
 {
-  printf("destructor\n");
   _soundVector.clear();
   _jointDeque.clear();
   _wheelVector.clear();
@@ -221,9 +220,9 @@ uint8_t* PlayerClass::createSample(float speed)
 const float CAR_L = 20.0;      // 車両長[m]
 const float CAR_D = 13.8;      // 台車間距離[m]
 const float CAR_W = 2.1;       // 車軸間距離[m]
-const float PERSON_POS = 5.0;  // 聴取者が車両中心から何mの場所にいるか[m]
+const float PERSON_POS = 6.0;  // 聴取者が車両中心から何mの場所にいるか[m]
 const float EAR_HEIGHT = 2.0;  // レール面(音源)から耳までの距離[m]
-const float ALPHA_WALL = 0.5;  // 壁の向こうの車輪からの音は何倍になるか
+const float ALPHA_WALL = 0.2;  // 壁の向こうの車輪からの音は何倍になるか
 
 JointSoundClass jointSound(EAR_HEIGHT, true);
 
@@ -233,46 +232,54 @@ void printBuf(uint8_t* buf, int SAMPLENUM) {
   }
 }
 
-void debug_setup() {
-  // テスト用に正弦波を生成
-  const size_t SAMPLENUM = 64;
-  uint8_t buf0[4 * SAMPLENUM];  // ステレオでx2, 16bitなのでx2
-  for (int i=0; i<SAMPLENUM; i++) {
-    int sinVal = 32767*sin(2.0 * PI * i/SAMPLENUM);
-    int cosVal = 32767*cos(2.0 * PI * i/SAMPLENUM);
-    buf0[4*i]     = sinVal & 0xff;
-    buf0[4*i + 1] = sinVal >> 8;
-    buf0[4*i + 2] = cosVal & 0xff;
-    buf0[4*i + 3] = cosVal >> 8;
-  }
+void debug_setup(float duration, float speed) {
 
   // 音源の追加
-  jointSound.addSoundSource(0, 24.9, 12.0, 0.5, 1.0, buf0, 4*SAMPLENUM);
+  
+  char fileName[] = "4-3-1_24.915kmh_encoded.wav";
+  FILE* fp = fopen(fileName, "rb");
+  uint8_t waste[40];
+  uint32_t dataSize;
+  uint8_t* data;
+  fread(waste, 1, 40, fp);
+  fread(&dataSize, 4, 1, fp);
+  data = new uint8_t[dataSize];
+  //printf("%d\n",dataSize);
+  fread(data, 1, dataSize, fp);
+  fclose(fp);
+  
+  jointSound.addSoundSource(0, 24.9, 12.0, 0.5, 1.0, data, dataSize);
 
   // ジョイントの追加
-  jointSound.addJoint(0, -25.001);
-  jointSound.addJoint(0, -50.0);
-  jointSound.addJoint(0, -75.0);
+  jointSound.addJoint(0, -10.0);
+  jointSound.addJoint(0, -35.0);
+  jointSound.addJoint(0, -60.0);
 
   // 車輪の追加
-  jointSound.addWheel(-25.0);
-  /*jointSound.addWheel(1, -100.0);
-  jointSound.addWheel(2, -200.0);
-  jointSound.addWheel(0, -CAR_L + CAR_D/2 - CAR_W/2 - PERSON_POS, 1.0, ALPHA_WALL);
-  jointSound.addWheel(1, -CAR_L + CAR_D/2 + CAR_W/2 - PERSON_POS, 1.0, ALPHA_WALL);
-  jointSound.addWheel(2, -CAR_D/2 - CAR_W/2 - PERSON_POS, 1.0, 1.0);
-  jointSound.addWheel(3, -CAR_D/2 + CAR_W/2 - PERSON_POS, 1.0, 1.0);
-  jointSound.addWheel(4, CAR_D/2 - CAR_W/2 - PERSON_POS, 1.0, 1.0);
-  jointSound.addWheel(5, CAR_D/2 + CAR_W/2 - PERSON_POS, 1.0, 1.0);
-  jointSound.addWheel(6, CAR_L - CAR_D/2 - CAR_W/2 - PERSON_POS, 1.0, ALPHA_WALL);
-  jointSound.addWheel(7, CAR_L - CAR_D/2 + CAR_W/2 - PERSON_POS, 1.0, ALPHA_WALL);*/
+  jointSound.addWheel(-CAR_L + CAR_D/2 - CAR_W/2 - PERSON_POS, 1.0, ALPHA_WALL);
+  jointSound.addWheel(-CAR_L + CAR_D/2 + CAR_W/2 - PERSON_POS, 1.0, ALPHA_WALL);
+  jointSound.addWheel(-CAR_D/2 - CAR_W/2 - PERSON_POS, 1.0, 1.0);
+  jointSound.addWheel(-CAR_D/2 + CAR_W/2 - PERSON_POS, 0.98, 1.0);
+  jointSound.addWheel(CAR_D/2 - CAR_W/2 - PERSON_POS, 1.0, 1.0);
+  jointSound.addWheel(CAR_D/2 + CAR_W/2 - PERSON_POS, 0.97, 1.0);
+  jointSound.addWheel(CAR_L - CAR_D/2 - CAR_W/2 - PERSON_POS, 1.0, ALPHA_WALL);
+  jointSound.addWheel(CAR_L - CAR_D/2 + CAR_W/2 - PERSON_POS, 1.0, ALPHA_WALL);
 
   // 音を出してみる
-  uint8_t output[4*SAMPLENUM];
-  for (int i=0; i<4*SAMPLENUM; i++) { output[i] = 0x0; }
-  jointSound.generateSound(output, 4*SAMPLENUM, 20.0);
-  printf("output=\n");
-  printBuf(output, SAMPLENUM);
+  size_t outSize = (size_t)(duration * SAMPLINGRATE * 4);
+  uint8_t* output;
+  output = new uint8_t[outSize];
+  for (int i=0; i<outSize; i++) { output[i] = 0x0; }
+  jointSound.generateSound(output, outSize, speed);
+  // printf("output=\n");
+  // printBuf(output, outSize/4);
+
+  fp = fopen("out.raw", "wb");
+  fwrite(output, 1, outSize, fp);
+  fclose(fp);
+  
+  delete data;
+  delete output;
   
 }
 
@@ -282,8 +289,18 @@ void debug_loop() {
 
 #ifndef ARDUINO_ARCH_ESP32
 
-int main() {
-  debug_setup();
+int main(int argc, char** argv) {
+  if (argc != 3) {
+    return 0;
+  }
+
+  float duration = atof(argv[1]);
+  float speed = atof(argv[2]);
+  if (duration <= 0 || speed <= 0) {
+    return 0;
+  }
+
+  debug_setup(duration, speed);
   debug_loop();
 }
 
