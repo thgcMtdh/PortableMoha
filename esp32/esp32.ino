@@ -3,10 +3,10 @@
 
 void setup() {
   Serial.begin(115200);
-  debug_setup();
+  // debug_setup();
 }
 
 void loop() {
-  debug_loop();
+  // debug_loop();
   delay(1);
 }
