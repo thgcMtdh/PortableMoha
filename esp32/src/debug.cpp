@@ -1,3 +1,5 @@
+#include "debug.h"
+
 #include "JointSoundClass.h"
 
 // 車両定数
@@ -22,7 +24,10 @@ void printBuf(uint8_t* buf, int SAMPLENUM) {
 void debug_setup() {
   // 音源の追加
 
-  char fileName[] = "4-3-1_24.915kmh_encoded.wav";
+#ifdef ARDUINO_ARCH_ESP32
+  // ESP32でSDカードから読み込む場合の処理
+#else
+  char fileName[] = "..\\data_in_SD\\4-3-1_24.915kmh_encoded.wav";
   FILE* fp = fopen(fileName, "rb");
   uint8_t waste[40];
   uint32_t dataSize;
@@ -33,6 +38,7 @@ void debug_setup() {
   // printf("%d\n",dataSize);
   fread(data, 1, dataSize, fp);
   fclose(fp);
+#endif
 
   jointSound.addSoundSource(0, 24.9, 12.0, 0.5, 1.0, data, dataSize);
 
