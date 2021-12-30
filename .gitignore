@@ -2,6 +2,10 @@
 *.vscode
 *.vscode/*
 
+# Data Files
+*.wav
+*.raw
+
 # MacOS File System
 *.DS_Store
 
