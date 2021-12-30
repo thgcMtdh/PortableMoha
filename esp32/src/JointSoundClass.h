@@ -16,81 +16,90 @@
 const float SAMPLINGRATE = 44100;
 const float T_SAMPLE = 1 / SAMPLINGRATE;
 
-class SoundSourceClass {
- public:
-  SoundSourceClass(int id, float speed, float minSpeed, float interceptPitch, float interceptVolume, uint8_t* buf, int size);
-  SoundSourceClass(const SoundSourceClass& obj);
-  ~SoundSourceClass();
-
-  int id;
-  float speed;
-  float minSpeed;
-  float interceptPitch;
-  float interceptVolume;
-  uint8_t* buf;
-  int size;
-};
-
-class JointClass {
- public:
-  JointClass(int soundId, float position);
-  JointClass(const JointClass& obj);
-  ~JointClass();
-
-  int soundId;
-  float position;
-};
-
-class WheelClass {
- public:
-  WheelClass(float position, float pitch = 1.0, float volume = 1.0);
-  WheelClass(const WheelClass& obj);
-  ~WheelClass();
-
-  float position;
-  float pitch;
-  float volume;
-};
-
-/// ジョイントと車輪の組み合わせによって生じる音を計算し、再生用のPCMデータを生成するクラス
-class PlayerClass {
- public:
-  /// @param pJoint 音源になるジョイントを指すポインタ
-  /// @param pWheel 音源になる車輪を指すポインタ
-  /// @param pSoundSource 再生する音源を指すポインタ
-  /// @param height 音源(レール上面を仮定)から聴取点までの距離 [m]
-  PlayerClass(JointClass* pJoint, WheelClass* pWheel, SoundSourceClass* pSoundSource, float height);
-  PlayerClass(const PlayerClass& obj);
-
-  ~PlayerClass();
-
-  /// @brief 再生の開始/一時停止を行う
-  /// @param play 1 : 再生, 0 : 一時停止
-  void setPlaying(bool play);
-
-  /// @brief 再生が終了したかどうかを返す. 終了した場合は破棄してほしい
-  /// @retval 1 : 再生終了済, 0 : 未完了
-  bool getIsFinished(void);
-
-  /// @brief 速度に応じて、ひとつのサンプルを生成
-  /// @param speed 現在の走行速度 [km/h]
-  /// @retval 16-bit stereo PCM 形式のデータ. 符号付16bit整数で、先頭16bitが L, 後方16bitが R.
-  uint8_t* createSample(float speed);
-
-  JointClass* _pJoint;              // 生成対象のジョイント
-  WheelClass* _pWheel;              // 生成対象の車輪
-  SoundSourceClass* _pSoundSource;  // 再生する音源
-  float _height;                    // 音源(レール上面を仮定)から聴取点までの距離 [m]
-
-  uint8_t _buf[4];  // 1サンプルぶんのPCMデータを保存するバッファ. 符号付16bit整数で、先頭16bitが L, 後方16bitが R.
-
-  float _playingSpeed;     // 再生速度は元の音源の何倍であるか
-  float _playingPosition;  // 音源の再生位置[サンプル目]
-  bool _isPlaying;         // 現在再生中か？
-  bool _isFinished;        // 最後まで再生したか？
-};
-
 class JointSoundClass {
+ private:
+  class SoundSourceClass {
+   public:
+    SoundSourceClass(int id, float speed, float minSpeed, float interceptPitch, float interceptVolume, uint8_t* buf, int size);
+    SoundSourceClass(const SoundSourceClass& obj);
+    ~SoundSourceClass();
+
+    int id;
+    float speed;
+    float minSpeed;
+    float interceptPitch;
+    float interceptVolume;
+    uint8_t* buf;
+    int size;
+  };
+
+  class JointClass {
+   public:
+    JointClass(int soundId, float position);
+    JointClass(const JointClass& obj);
+    ~JointClass();
+
+    int soundId;
+    float position;
+  };
+
+  class WheelClass {
+   public:
+    WheelClass(float position, float pitch = 1.0, float volume = 1.0);
+    WheelClass(const WheelClass& obj);
+    ~WheelClass();
+
+    float position;
+    float pitch;
+    float volume;
+  };
+
+  class PlayerClass {
+   public:
+    /// @brief ジョイントと車輪の組み合わせによって生じる音を計算し、再生用のPCMデータを生成するクラス
+    /// @param pJoint 音源になるジョイントを指すポインタ
+    /// @param pWheel 音源になる車輪を指すポインタ
+    /// @param pSoundSource 再生する音源を指すポインタ
+    /// @param height 音源(レール上面を仮定)から聴取点までの距離 [m]
+    PlayerClass(JointClass* pJoint, WheelClass* pWheel, SoundSourceClass* pSoundSource, float height);
+    PlayerClass(const PlayerClass& obj);
+
+    ~PlayerClass();
+
+    /// @brief 再生の開始/一時停止を行う
+    /// @param play 1 : 再生, 0 : 一時停止
+    void setPlaying(bool play);
+
+    /// @brief 再生が終了したかどうかを返す. 終了した場合は破棄してほしい
+    /// @retval 1 : 再生終了済, 0 : 未完了
+    bool getIsFinished(void);
+
+    /// @brief 速度に応じて、ひとつのサンプルを生成
+    /// @param speed 現在の走行速度 [km/h]
+    /// @retval 16-bit stereo PCM 形式のデータ. 符号付16bit整数で、先頭16bitが L, 後方16bitが R.
+    uint8_t* createSample(float speed);
+
+    JointClass* _pJoint;              // 生成対象のジョイント
+    WheelClass* _pWheel;              // 生成対象の車輪
+    SoundSourceClass* _pSoundSource;  // 再生する音源
+    float _height;                    // 音源(レール上面を仮定)から聴取点までの距離 [m]
+
+    uint8_t _buf[4];  // 1サンプルぶんのPCMデータを保存するバッファ. 符号付16bit整数で、先頭16bitが L, 後方16bitが R.
+
+    float _playingSpeed;     // 再生速度は元の音源の何倍であるか
+    float _playingPosition;  // 音源の再生位置[サンプル目]
+    bool _isPlaying;         // 現在再生中か？
+    bool _isFinished;        // 最後まで再生したか？
+  };
+
+  const float _height;   // distance from sound source to listening point [m]
+  const bool _loopback;  // joint loopback enable flag
+
+  std::vector<SoundSourceClass> _soundVector;
+  std::deque<JointClass> _jointDeque;
+  std::vector<WheelClass> _wheelVector;
+  std::vector<PlayerClass> _playerVector;
+
  public:
   JointSoundClass(const float listenigPointHeight, const bool loopback);
   ~JointSoundClass();
@@ -131,13 +140,4 @@ class JointSoundClass {
   /// @param size size(in bytes) of data block to be copied to buf. -1 is an indication to user that data buffer shall be flushed
   /// @retval 1:success, 0:fail
   int generateSound(uint8_t* buf, int size, float speed);
-
- private:
-  const float _height;   // distance from sound source to listening point [m]
-  const bool _loopback;  // joint loopback enable flag
-
-  std::vector<SoundSourceClass> _soundVector;
-  std::deque<JointClass> _jointDeque;
-  std::vector<WheelClass> _wheelVector;
-  std::vector<PlayerClass> _playerVector;
 };
