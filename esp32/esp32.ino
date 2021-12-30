@@ -1,5 +1,5 @@
 #include <Arduino.h>
-#include "src/JointSoundClass.h"
+#include "src/debug.h"
 
 void setup() {
   Serial.begin(115200);

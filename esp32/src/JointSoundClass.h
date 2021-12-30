@@ -147,6 +147,3 @@ private:
   std::vector<WheelClass> _wheelVector;
   std::vector<PlayerClass> _playerVector;
 };
-
-void debug_setup(void);
-void debug_loop(void);
