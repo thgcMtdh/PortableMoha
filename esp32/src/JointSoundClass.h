@@ -3,22 +3,21 @@
 #ifdef ARDUINO_ARCH_ESP32
 #include <Arduino.h>
 #else
-#include <stdio.h>
-#include <stdint.h>
 #include <math.h>
+#include <stdint.h>
+#include <stdio.h>
 #define PI 3.1415926535897932384626433832795
 #endif
 
-#include <vector>
-#include <deque>
 #include <algorithm>
+#include <deque>
+#include <vector>
 
 const float SAMPLINGRATE = 44100;
 const float T_SAMPLE = 1 / SAMPLINGRATE;
 
-class SoundSourceClass
-{
-public:
+class SoundSourceClass {
+ public:
   SoundSourceClass(int id, float speed, float minSpeed, float interceptPitch, float interceptVolume, uint8_t* buf, int size);
   SoundSourceClass(const SoundSourceClass& obj);
   ~SoundSourceClass();
@@ -27,14 +26,13 @@ public:
   float speed;
   float minSpeed;
   float interceptPitch;
-  float interceptVolume;  
+  float interceptVolume;
   uint8_t* buf;
   int size;
 };
 
-class JointClass
-{
-public:
+class JointClass {
+ public:
   JointClass(int soundId, float position);
   JointClass(const JointClass& obj);
   ~JointClass();
@@ -43,10 +41,9 @@ public:
   float position;
 };
 
-class WheelClass
-{
-public:
-  WheelClass(float position, float pitch=1.0, float volume=1.0);
+class WheelClass {
+ public:
+  WheelClass(float position, float pitch = 1.0, float volume = 1.0);
   WheelClass(const WheelClass& obj);
   ~WheelClass();
 
@@ -55,11 +52,9 @@ public:
   float volume;
 };
 
-
 /// ジョイントと車輪の組み合わせによって生じる音を計算し、再生用のPCMデータを生成するクラス
-class PlayerClass
-{
-public:
+class PlayerClass {
+ public:
   /// @param pJoint 音源になるジョイントを指すポインタ
   /// @param pWheel 音源になる車輪を指すポインタ
   /// @param pSoundSource 再生する音源を指すポインタ
@@ -82,10 +77,10 @@ public:
   /// @retval 16-bit stereo PCM 形式のデータ. 符号付16bit整数で、先頭16bitが L, 後方16bitが R.
   uint8_t* createSample(float speed);
 
-  JointClass* _pJoint;  // 生成対象のジョイント
-  WheelClass* _pWheel;  // 生成対象の車輪
+  JointClass* _pJoint;              // 生成対象のジョイント
+  WheelClass* _pWheel;              // 生成対象の車輪
   SoundSourceClass* _pSoundSource;  // 再生する音源
-  float _height;  // 音源(レール上面を仮定)から聴取点までの距離 [m]
+  float _height;                    // 音源(レール上面を仮定)から聴取点までの距離 [m]
 
   uint8_t _buf[4];  // 1サンプルぶんのPCMデータを保存するバッファ. 符号付16bit整数で、先頭16bitが L, 後方16bitが R.
 
@@ -95,9 +90,8 @@ public:
   bool _isFinished;        // 最後まで再生したか？
 };
 
-class JointSoundClass
-{
-public:
+class JointSoundClass {
+ public:
   JointSoundClass(const float listenigPointHeight, const bool loopback);
   ~JointSoundClass();
 
@@ -112,7 +106,7 @@ public:
   /// @param size           size of the sound data [byte]
   /// @retval 1:success, 0:fail
   int addSoundSource(int id, float speed, float minSpeed, float interceptPitch, float interceptVolume, uint8_t* buf, int size);
-  
+
   /// @brief 初期設定時にジョイントを追加する. 音声生成中に実行してはならない
   /// @param soundId  ID of the sound source which is played when a wheel is passing.
   /// @param position joint position when looking from listener.
@@ -130,7 +124,7 @@ public:
   /// @param position 聴取点からみた車輪位置[m]. 進行方向前方にある場合は負, 後方にある場合は正.
   /// @param pitch    [省略可] 音程を変える場合に設定. 周波数を何倍するか.
   /// @param volume   [省略可] 音量を変える場合に設定. 振幅を何倍するか.
-  int addWheel(float postion, float pitch=1.0, float volume=1.0);
+  int addWheel(float postion, float pitch = 1.0, float volume = 1.0);
 
   /// @brief ある速度における音データをsize[bytes]ぶん生成する
   /// @param buf  buffer to be filled with PCM data stream
@@ -138,7 +132,7 @@ public:
   /// @retval 1:success, 0:fail
   int generateSound(uint8_t* buf, int size, float speed);
 
-private:
+ private:
   const float _height;   // distance from sound source to listening point [m]
   const bool _loopback;  // joint loopback enable flag
 
