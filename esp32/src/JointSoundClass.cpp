@@ -1,5 +1,11 @@
 #include "JointSoundClass.h"
 
+#ifdef ARDUINO_ARCH_ESP32
+#include <Arduino.h>
+#else
+#include <math.h>
+#endif
+
 JointSoundClass::SoundSourceClass::SoundSourceClass(int id, float speed, float minSpeed, float interceptPitch, float interceptVolume, uint8_t* buf, int size)
     : id(id), speed(speed), minSpeed(minSpeed), interceptPitch(interceptPitch), interceptVolume(interceptVolume), buf(buf), size(size) {}
 JointSoundClass::SoundSourceClass::SoundSourceClass(const SoundSourceClass& obj)

@@ -1,13 +1,5 @@
 #pragma once
 
-#ifdef ARDUINO_ARCH_ESP32
-#include <Arduino.h>
-#else
-#include <math.h>
-#include <stdint.h>
-#include <stdio.h>
-#endif
-
 #include <algorithm>
 #include <deque>
 #include <vector>
