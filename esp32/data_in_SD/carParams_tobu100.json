@@ -11,7 +11,7 @@
     "modulationMaxFreq": 43.0,
     "pulseMode": [
         {"fs": 0, "mode": 0, "fc1": 200, "fc2": 200, "frand1":0, "frand2":0},
-        {"fs": 5.4, "mode": 1, "NPulse": 45},
+        {"fs": 5.4, "mode": 1, "Npulse": 45},
         {"fs": 7.0, "mode": 1, "Npulse": 27},
         {"fs": 13.7, "mode": 1, "Npulse": 15},
         {"fs": 25.0, "mode": 1, "Npulse": 9},
