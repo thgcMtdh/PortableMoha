@@ -6,9 +6,6 @@
 
 #include "constant.h"
 
-const float SAMPLINGRATE = 44100;
-const float T_SAMPLE = 1 / SAMPLINGRATE;
-
 class JointSoundClass {
  private:
   class SoundSourceClass {

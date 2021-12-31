@@ -8,3 +8,6 @@
 #include <stdint.h>
 #include <stddef.h>
 #endif
+
+#define SAMPLINGRATE 44100
+#define T_SAMPLE (1/SAMPLINGRATE)
