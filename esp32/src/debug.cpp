@@ -1,5 +1,6 @@
 #include "debug.h"
 
+#include "CarDataClass.h"
 #include "JointSoundClass.h"
 
 // 車両定数
@@ -13,6 +14,7 @@ const float ALPHA_WALL = 0.2;  // 壁の向こうの車輪からの音は何倍�
 float duration = 10;
 float speed = 30;
 
+CarDataClass carData;
 JointSoundClass jointSound(EAR_HEIGHT, true);
 
 void printBuf(uint8_t* buf, int SAMPLENUM) {
@@ -22,6 +24,9 @@ void printBuf(uint8_t* buf, int SAMPLENUM) {
 }
 
 void debug_setup() {
+  char carDataPath[] = "/carParams_tobu100.json";
+  carData.setCarDataFromFile(carDataPath);
+  /*
   // 音源の追加
 
 #ifdef ARDUINO_ARCH_ESP32
@@ -74,6 +79,7 @@ void debug_setup() {
 
   delete data;
   delete output;
+  */
 }
 
 void debug_loop() {}
@@ -81,7 +87,7 @@ void debug_loop() {}
 #ifndef ARDUINO_ARCH_ESP32
 
 int main(int argc, char** argv) {
-  if (argc != 3) {
+  /*if (argc != 3) {
     return 0;
   }
 
@@ -90,6 +96,7 @@ int main(int argc, char** argv) {
   if (duration <= 0 || speed <= 0) {
     return 0;
   }
+  */
 
   debug_setup();
   debug_loop();
