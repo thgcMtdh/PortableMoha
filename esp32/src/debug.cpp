@@ -27,7 +27,7 @@ void debug_setup() {
 #ifdef ARDUINO_ARCH_ESP32
   // ESP32でSDカードから読み込む場合の処理
 #else
-  char fileName[] = "..\\data_in_SD\\4-3-1_24.915kmh_encoded.wav";
+  char fileName[] = "../data_in_SD/4-3-1_24.915kmh_encoded.wav";
   FILE* fp = fopen(fileName, "rb");
   uint8_t waste[40];
   uint32_t dataSize;
