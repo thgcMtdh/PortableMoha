@@ -10,4 +10,4 @@
 #endif
 
 #define SAMPLINGRATE 44100
-#define T_SAMPLE (1/SAMPLINGRATE)
+#define T_SAMPLE (1.0/SAMPLINGRATE)
