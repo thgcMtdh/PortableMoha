@@ -1,3 +1,5 @@
+#pragma once
+
 #include "constant.h"
 
 void debug_setup();

@@ -77,8 +77,8 @@ int CarDataClass::setCarDataFromFile(char* carDataPath) {
   _regenLostFreq = j["regenLostFreq"].get<float>();
   _modulationMax = j["modulationMax"].get<float>();
   _modulationMaxFreq = j["modulationMaxFreq"].get<float>();
-  _pulseNum = j["pulseMode"].size();
-  for (size_t i = 0; i < _pulseNum; i++) {
+  _pmNum = j["pulseMode"].size();
+  for (size_t i = 0; i < _pmNum; i++) {
     _listFs[i]     = !j["pulseMode"][i]["fs"].is_null()     ? j["pulseMode"][i]["fs"].get<float>()     : 0;
     _listFc1[i]    = !j["pulseMode"][i]["fc1"].is_null()    ? j["pulseMode"][i]["fc1"].get<float>()    : 0;
     _listFc2[i]    = !j["pulseMode"][i]["fc2"].is_null()    ? j["pulseMode"][i]["fc2"].get<float>()    : 0;
@@ -103,7 +103,7 @@ void CarDataClass::clearCarData() {
   _regenLostFreq = 0;
   _modulationMax = 0;
   _modulationMaxFreq = 0;
-  _pulseNum = 0;
+  _pmNum = 0;
   for (size_t i = 0; i < CARDATA_MAX_PULSEMODE_NUM; i++) {
     _listFs[i]     = 0;
     _listFc1[i]    = 0;
