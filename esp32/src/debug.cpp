@@ -10,7 +10,7 @@ const float CAR_D = 13.8;      // 台車間距離[m]
 const float CAR_W = 2.1;       // 車軸間距離[m]
 const float PERSON_POS = 6.0;  // 聴取者が車両中心から何mの場所にいるか[m]
 const float EAR_HEIGHT = 2.0;  // レール面(音源)から耳までの距離[m]
-const float ALPHA_WALL = 0.2;  // 壁の向こうの車輪からの音は何倍になるか
+const float ALPHA_WALL = 0.4;  // 壁の向こうの車輪からの音は何倍になるか
 
 CarDataClass carData;
 JointSoundClass jointSound(EAR_HEIGHT, true);
@@ -31,7 +31,7 @@ void debug_setup() {
 #ifdef ARDUINO_ARCH_ESP32
   // ESP32でSDカードから読み込む場合の処理
 #else
-  char fileName[] = "../data_in_SD/4-3-1_24.915kmh_encoded.wav";
+  char fileName[] = "../data_in_SD/4-3-1_24.915kmh_encoded_2.wav";
   FILE* fp = fopen(fileName, "rb");
   uint8_t waste[40];
   uint32_t dataSize;
@@ -43,7 +43,7 @@ void debug_setup() {
   fread(data, 1, dataSize, fp);
   fclose(fp);
 #endif
-  jointSound.addSoundSource(0, 24.9, 12.0, 0.5, 1.0, data, dataSize);
+  jointSound.addSoundSource(0, 24.9, 12.0, 0.7, 1.0, data, dataSize);
 
   // ジョイントの追加
   jointSound.addJoint(0, -10.0);
@@ -60,12 +60,14 @@ void debug_setup() {
   jointSound.addWheel(CAR_L - CAR_D / 2 - CAR_W / 2 - PERSON_POS, 1.0, ALPHA_WALL);
   jointSound.addWheel(CAR_L - CAR_D / 2 + CAR_W / 2 - PERSON_POS, 1.0, ALPHA_WALL);
 
+  jointSound.setVolume(15000);
+
   // --- VVVF音 ---
   vvvfSound.setVolume(10000);
   vvvfSound.setCutoffFreq(1000);
 
   // 音を出してみる
-  float duration = 20.0;
+  float duration = 40.0;
   size_t outSize = duration * SAMPLINGRATE * 4;
   uint8_t* buf = new uint8_t[outSize];
   uint8_t* output = new uint8_t[outSize];
@@ -73,10 +75,13 @@ void debug_setup() {
   for (int i = 0; i < outSize; i++) {
     buf[i] = 0x0;
     output[i] = 0x0;
-    speed[i/4] = 32.0; // T_SAMPLE * i/4  * carData._acc0 * 1.3;
+    speed[i/4] = T_SAMPLE * i/4  * carData._acc0;
+    if (speed[i/4] > 80.0) {
+      speed[i/4] = 80.0;
+    }
   }
   
-  jointSound.generateSound(buf, outSize, speed[0]);
+  jointSound.generateSound(buf, outSize, speed);
   for (int i=0; i < outSize; i++) {
     output[i] += buf[i];
   }

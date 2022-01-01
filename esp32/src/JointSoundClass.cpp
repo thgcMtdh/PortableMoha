@@ -20,12 +20,12 @@ JointSoundClass::WheelClass::WheelClass(float position, float pitch, float volum
 JointSoundClass::WheelClass::WheelClass(const WheelClass& obj) : position(obj.position), pitch(obj.pitch), volume(obj.volume) {}
 JointSoundClass::WheelClass::~WheelClass() {}
 
-JointSoundClass::PlayerClass::PlayerClass(JointClass* pJoint, WheelClass* pWheel, SoundSourceClass* pSoundSource, float height)
-    : _pJoint(pJoint), _pWheel(pWheel), _pSoundSource(pSoundSource), _height(height), _playingSpeed(1.0), _playingPosition(0.0), _isPlaying(false), _isFinished(false) {
+JointSoundClass::PlayerClass::PlayerClass(JointClass* pJoint, WheelClass* pWheel, SoundSourceClass* pSoundSource, float height, int volume)
+    : _pJoint(pJoint), _pWheel(pWheel), _pSoundSource(pSoundSource), _height(height), _playingSpeed(1.0), _playingPosition(0.0), _isPlaying(false), _isFinished(false), _volume(volume) {
   for (int i = 0; i < sizeof(_buf); i++) _buf[i] = 0x0;
 }
 JointSoundClass::PlayerClass::PlayerClass(const PlayerClass& obj)
-    : _pJoint(obj._pJoint), _pWheel(obj._pWheel), _pSoundSource(obj._pSoundSource), _height(obj._height), _playingSpeed(obj._playingSpeed), _playingPosition(obj._playingPosition), _isPlaying(obj._isPlaying), _isFinished(obj._isFinished) {
+    : _pJoint(obj._pJoint), _pWheel(obj._pWheel), _pSoundSource(obj._pSoundSource), _height(obj._height), _playingSpeed(obj._playingSpeed), _playingPosition(obj._playingPosition), _isPlaying(obj._isPlaying), _isFinished(obj._isFinished), _volume(obj._volume) {
   for (int i = 0; i < 4; i++) {
     _buf[i] = obj._buf[i];
   }
@@ -46,6 +46,7 @@ uint8_t* JointSoundClass::PlayerClass::createSample(float speed) {
     // 振幅を計算
     float amp = _height / sqrtf(_height * _height + _pWheel->position * _pWheel->position);  // 音源からの距離による減衰
     amp *= _pWheel->volume;                                                                  // 隣の車両にあるなど、車輪固有の減衰
+    amp *= (_volume / 32767.0);
 
     // 何サンプル目を再生するかに変換
     _playingPosition += _playingSpeed;
@@ -84,7 +85,7 @@ uint8_t* JointSoundClass::PlayerClass::createSample(float speed) {
   return _buf;
 }
 
-JointSoundClass::JointSoundClass(const float listeningPointHeight, const bool loopback) : _height(listeningPointHeight), _loopback(loopback) {}
+JointSoundClass::JointSoundClass(const float listeningPointHeight, const bool loopback) : _height(listeningPointHeight), _loopback(loopback), _volume(0.0) {}
 JointSoundClass::~JointSoundClass() {
   _soundVector.clear();
   _jointDeque.clear();
@@ -126,7 +127,15 @@ int JointSoundClass::addWheel(float position, float pitch, float volume) {
   return 1;
 }
 
-int JointSoundClass::generateSound(uint8_t* buf, int size, float speed) {
+int JointSoundClass::setVolume(int volume) {
+  if (volume < 0 || volume > 32767) {
+    return 0;
+  }
+  _volume = volume;
+  return 1;
+}
+
+int JointSoundClass::generateSound(uint8_t* buf, int size, float* speed) {
   // エラーチェック
   if (_soundVector.empty() || _jointDeque.empty() || _wheelVector.empty()) {
     return 0;  // sound, joint, wheel それぞれ1つ以上あるか確認
@@ -141,7 +150,7 @@ int JointSoundClass::generateSound(uint8_t* buf, int size, float speed) {
 
     // -- joint通過判定 --
     // jointの位置を進める
-    float traveledDistance = speed / 3.6 * T_SAMPLE;  // サンプリング時間の間に進んだ距離[m]
+    float traveledDistance = speed[s_i] / 3.6 * T_SAMPLE;  // サンプリング時間の間に進んだ距離[m]
     for (auto& rJoint : _jointDeque) {
       rJoint.position += traveledDistance;  // jointの位置を進める
       // printf("joint pos = %f\n", rJoint.position);
@@ -156,7 +165,7 @@ int JointSoundClass::generateSound(uint8_t* buf, int size, float speed) {
             if (rSoundSource.id == rJoint.soundId) {
               // playerを生成し、再生を開始
               // printf("created player\n");
-              _playerVector.push_back(PlayerClass(&rJoint, &rWheel, &rSoundSource, _height));
+              _playerVector.push_back(PlayerClass(&rJoint, &rWheel, &rSoundSource, _height, _volume));
               _playerVector.back().setPlaying(1);
             }
           }
@@ -184,7 +193,7 @@ int JointSoundClass::generateSound(uint8_t* buf, int size, float speed) {
     int16_t* oneBufL = reinterpret_cast<int16_t*>(&buf[4 * s_i]);
     int16_t* oneBufR = reinterpret_cast<int16_t*>(&buf[4 * s_i + 2]);
     for (auto& rPlayer : _playerVector) {
-      uint8_t* sample = rPlayer.createSample(speed);
+      uint8_t* sample = rPlayer.createSample(speed[s_i]);
       *oneBufL += *(reinterpret_cast<int16_t*>(&sample[0]));
       *oneBufR += *(reinterpret_cast<int16_t*>(&sample[2]));
     }
