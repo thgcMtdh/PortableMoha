@@ -18,6 +18,7 @@ void MotorSoundClass::clear() {
   _phaseSmallGear = 0.0;
   _phaseEngage = 0.0;
   _volume = 0;
+  _isEngagementPlay = false;
 }
 
 int MotorSoundClass::setVolume(int volume) {
@@ -26,6 +27,11 @@ int MotorSoundClass::setVolume(int volume) {
   }
   _volume = volume;
   return 1;
+}
+
+int MotorSoundClass::setEngagementPlay(bool isPlay) {
+  _isEngagementPlay = isPlay;
+  return 0;
 }
 
 int MotorSoundClass::generateSound(uint8_t* buf, int size, float* speed) {
@@ -66,11 +72,13 @@ int MotorSoundClass::generateSound(uint8_t* buf, int size, float* speed) {
     ampSmallGear += sinRough(-18*_phaseSmallGear)/12;
     ampSmallGear += sinRough(20*_phaseSmallGear)/14;
     float ampEngage = 0.0;
-    ampEngage += sinRough(_phaseEngage);
-    ampEngage += sinRough(2*_phaseEngage)/2;
-    ampEngage += sinRough(3*_phaseEngage)/4;
-    ampEngage += sinRough(4*_phaseEngage)/6;
-    ampEngage += sinRough(5*_phaseEngage)/8;
+    if (_isEngagementPlay) {
+      ampEngage += sinRough(_phaseEngage);
+      ampEngage += sinRough(2*_phaseEngage)/2;
+      ampEngage += sinRough(3*_phaseEngage)/4;
+      ampEngage += sinRough(4*_phaseEngage)/6;
+      ampEngage += sinRough(5*_phaseEngage)/8;
+    }
     float output = (ampSmallGear + ampEngage)/2.0;
     output = firstHPF1.update(output, T_SAMPLE);
     output = firstHPF2.update(output, T_SAMPLE);
@@ -82,7 +90,7 @@ int MotorSoundClass::generateSound(uint8_t* buf, int size, float* speed) {
 
     // 出力
     *pResultL = output * _volume;
-    *pResultR = *pResultL;
+    *pResultR = output * _volume;
   }
   return 1;
 }

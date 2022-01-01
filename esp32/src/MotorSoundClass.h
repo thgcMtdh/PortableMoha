@@ -12,7 +12,10 @@ private:
   float _phaseLargeGear;  // 大歯車の回転角(0 to 1)
   float _phaseSmallGear;  // 小歯車の回転角(0 to 1)
   float _phaseEngage;  // 噛み合い周波数の位相角(0 to 1)
+
   int _volume;  // 音量(0-32767)
+
+  bool _isEngagementPlay;  // 噛み合い周波数の音を鳴らすかどうか
 
   /// @brief 簡単なsin波生成
   /// @param[in] phase 位相(0 to 2pi)
@@ -63,6 +66,11 @@ public:
   /// @param[in] volume 音量(0-32767)
   /// @retval 1:success, 0:fail
   int setVolume(int volume);
+
+  /// @brief 噛み合い周波数の音を鳴らすかどうか設定する. 一般に惰行時は鳴らない
+  /// @param[in] isPlay 鳴らす場合1, 鳴らさない場合0をセット
+  /// @retval 1:success, 0:fail
+  int setEngagementPlay(bool isPlay);
 
   /// @brief ある速度における音データをsize[bytes]ぶん生成する
   /// @param[out] buf 生成したPCMデータが格納されるバッファへのポインタ

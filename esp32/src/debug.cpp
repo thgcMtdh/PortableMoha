@@ -70,6 +70,7 @@ void debug_setup() {
 
   // --- モーター音 ---
   motorSound.setVolume(10000);
+  motorSound.setEngagementPlay(true);
 
   // 音を出してみる
   float duration = 30.0;
