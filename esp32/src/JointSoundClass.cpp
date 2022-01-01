@@ -1,18 +1,88 @@
 #include "JointSoundClass.h"
 
-SoundSourceClass::SoundSourceClass(int id, float speed, float minSpeed, float interceptPitch, float interceptVolume, uint8_t* buf, int size)
+#ifdef ARDUINO_ARCH_ESP32
+#include <Arduino.h>
+#else
+#include <math.h>
+#endif
+
+JointSoundClass::SoundSourceClass::SoundSourceClass(int id, float speed, float minSpeed, float interceptPitch, float interceptVolume, uint8_t* buf, int size)
     : id(id), speed(speed), minSpeed(minSpeed), interceptPitch(interceptPitch), interceptVolume(interceptVolume), buf(buf), size(size) {}
-SoundSourceClass::SoundSourceClass(const SoundSourceClass& obj)
+JointSoundClass::SoundSourceClass::SoundSourceClass(const SoundSourceClass& obj)
     : id(obj.id), speed(obj.speed), minSpeed(obj.minSpeed), interceptPitch(obj.interceptPitch), interceptVolume(obj.interceptVolume), buf(obj.buf), size(obj.size) {}
-SoundSourceClass::~SoundSourceClass() {}
+JointSoundClass::SoundSourceClass::~SoundSourceClass() {}
 
-JointClass::JointClass(int soundId, float position) : soundId(soundId), position(position) {}
-JointClass::JointClass(const JointClass& obj) : soundId(obj.soundId), position(obj.position) {}
-JointClass::~JointClass() {}
+JointSoundClass::JointClass::JointClass(int soundId, float position) : soundId(soundId), position(position) {}
+JointSoundClass::JointClass::JointClass(const JointClass& obj) : soundId(obj.soundId), position(obj.position) {}
+JointSoundClass::JointClass::~JointClass() {}
 
-WheelClass::WheelClass(float position, float pitch, float volume) : position(position), pitch(pitch), volume(volume) {}
-WheelClass::WheelClass(const WheelClass& obj) : position(obj.position), pitch(obj.pitch), volume(obj.volume) {}
-WheelClass::~WheelClass() {}
+JointSoundClass::WheelClass::WheelClass(float position, float pitch, float volume) : position(position), pitch(pitch), volume(volume) {}
+JointSoundClass::WheelClass::WheelClass(const WheelClass& obj) : position(obj.position), pitch(obj.pitch), volume(obj.volume) {}
+JointSoundClass::WheelClass::~WheelClass() {}
+
+JointSoundClass::PlayerClass::PlayerClass(JointClass* pJoint, WheelClass* pWheel, SoundSourceClass* pSoundSource, float height)
+    : _pJoint(pJoint), _pWheel(pWheel), _pSoundSource(pSoundSource), _height(height), _playingSpeed(1.0), _playingPosition(0.0), _isPlaying(false), _isFinished(false) {
+  for (int i = 0; i < sizeof(_buf); i++) _buf[i] = 0x0;
+}
+JointSoundClass::PlayerClass::PlayerClass(const PlayerClass& obj)
+    : _pJoint(obj._pJoint), _pWheel(obj._pWheel), _pSoundSource(obj._pSoundSource), _height(obj._height), _playingSpeed(obj._playingSpeed), _playingPosition(obj._playingPosition), _isPlaying(obj._isPlaying), _isFinished(obj._isFinished) {
+  for (int i = 0; i < 4; i++) {
+    _buf[i] = obj._buf[i];
+  }
+}
+JointSoundClass::PlayerClass::~PlayerClass() {}
+
+void JointSoundClass::PlayerClass::setPlaying(bool play) { _isPlaying = play; }
+
+bool JointSoundClass::PlayerClass::getIsFinished() { return _isFinished; }
+
+uint8_t* JointSoundClass::PlayerClass::createSample(float speed) {
+  if (_isPlaying && !_isFinished) {
+    // 再生速度(=音の高さ)を計算
+    float speedRatio = speed / _pSoundSource->speed;
+    _playingSpeed = _pSoundSource->interceptPitch + (1 - _pSoundSource->interceptPitch) * speedRatio;  // 音程-速度特性は一次関数を仮定
+    _playingSpeed *= _pWheel->pitch;                                                                   // 車輪固有の特性
+
+    // 振幅を計算
+    float amp = _height / sqrtf(_height * _height + _pWheel->position * _pWheel->position);  // 音源からの距離による減衰
+    amp *= _pWheel->volume;                                                                  // 隣の車両にあるなど、車輪固有の減衰
+
+    // 何サンプル目を再生するかに変換
+    _playingPosition += _playingSpeed;
+    int i1 = static_cast<int>(_playingPosition);
+    int i2 = i1 + 1;
+    // printf("_playingPosition, i1, i2 = %f, %d, %d\n", _playingPosition, i1, i2);
+    // インデックスが長さを越えている場合、再生終了したので停止
+    if (i2 >= _pSoundSource->size / 2 / 2) {  // ステレオで /2, 2byte/sampleなので /2
+      _isFinished = true;
+      _isPlaying = false;
+      // LとRの2つについて、線形補完してサンプル生成
+    } else {
+      float alpha = _playingPosition - static_cast<float>(i1);  // 線形補間の位置(0～1). 0 は x1 側、1 は x2 側
+      int16_t sample1, sample2, result;
+      // L
+      sample1 = *(reinterpret_cast<int16_t*>(&_pSoundSource->buf[4 * i1]));  // 4*i1のアドレスをint16_t型とみなして読み込む
+      sample2 = *(reinterpret_cast<int16_t*>(&_pSoundSource->buf[4 * i2]));
+      result = static_cast<int16_t>(amp * ((1 - alpha) * sample1 + alpha * sample2));
+      // printf("L sample1, sample2, result = %d, %d, %d\n", sample1, sample2, result);
+      _buf[0] = result & 0xff;
+      _buf[1] = result >> 8;
+      // R
+      sample1 = *(reinterpret_cast<int16_t*>(&_pSoundSource->buf[4 * i1 + 2]));
+      sample2 = *(reinterpret_cast<int16_t*>(&_pSoundSource->buf[4 * i2 + 2]));
+      result = static_cast<int16_t>(amp * ((1 - alpha) * sample1 + alpha * sample2));
+      _buf[2] = result & 0xff;
+      _buf[3] = result >> 8;
+
+      return _buf;
+    }
+  }
+  _buf[0] = 0;
+  _buf[1] = 0;
+  _buf[2] = 0;
+  _buf[3] = 0;
+  return _buf;
+}
 
 JointSoundClass::JointSoundClass(const float listeningPointHeight, const bool loopback) : _height(listeningPointHeight), _loopback(loopback) {}
 JointSoundClass::~JointSoundClass() {
@@ -131,70 +201,4 @@ int JointSoundClass::generateSound(uint8_t* buf, int size, float speed) {
     }
   }
   return 1;
-}
-
-PlayerClass::PlayerClass(JointClass* pJoint, WheelClass* pWheel, SoundSourceClass* pSoundSource, float height)
-    : _pJoint(pJoint), _pWheel(pWheel), _pSoundSource(pSoundSource), _height(height), _playingSpeed(1.0), _playingPosition(0.0), _isPlaying(false), _isFinished(false) {
-  for (int i = 0; i < sizeof(_buf); i++) _buf[i] = 0x0;
-}
-
-PlayerClass::PlayerClass(const PlayerClass& obj)
-    : _pJoint(obj._pJoint), _pWheel(obj._pWheel), _pSoundSource(obj._pSoundSource), _height(obj._height), _playingSpeed(obj._playingSpeed), _playingPosition(obj._playingPosition), _isPlaying(obj._isPlaying), _isFinished(obj._isFinished) {
-  for (int i = 0; i < 4; i++) {
-    _buf[i] = obj._buf[i];
-  }
-}
-
-PlayerClass::~PlayerClass() {}
-
-void PlayerClass::setPlaying(bool play) { _isPlaying = play; }
-
-bool PlayerClass::getIsFinished() { return _isFinished; }
-
-uint8_t* PlayerClass::createSample(float speed) {
-  if (_isPlaying && !_isFinished) {
-    // 再生速度(=音の高さ)を計算
-    float speedRatio = speed / _pSoundSource->speed;
-    _playingSpeed = _pSoundSource->interceptPitch + (1 - _pSoundSource->interceptPitch) * speedRatio;  // 音程-速度特性は一次関数を仮定
-    _playingSpeed *= _pWheel->pitch;                                                                   // 車輪固有の特性
-
-    // 振幅を計算
-    float amp = _height / sqrtf(_height * _height + _pWheel->position * _pWheel->position);  // 音源からの距離による減衰
-    amp *= _pWheel->volume;                                                                  // 隣の車両にあるなど、車輪固有の減衰
-
-    // 何サンプル目を再生するかに変換
-    _playingPosition += _playingSpeed;
-    int i1 = static_cast<int>(_playingPosition);
-    int i2 = i1 + 1;
-    // printf("_playingPosition, i1, i2 = %f, %d, %d\n", _playingPosition, i1, i2);
-    // インデックスが長さを越えている場合、再生終了したので停止
-    if (i2 >= _pSoundSource->size / 2 / 2) {  // ステレオで /2, 2byte/sampleなので /2
-      _isFinished = true;
-      _isPlaying = false;
-      // LとRの2つについて、線形補完してサンプル生成
-    } else {
-      float alpha = _playingPosition - static_cast<float>(i1);  // 線形補間の位置(0～1). 0 は x1 側、1 は x2 側
-      int16_t sample1, sample2, result;
-      // L
-      sample1 = *(reinterpret_cast<int16_t*>(&_pSoundSource->buf[4 * i1]));  // 4*i1のアドレスをint16_t型とみなして読み込む
-      sample2 = *(reinterpret_cast<int16_t*>(&_pSoundSource->buf[4 * i2]));
-      result = static_cast<int16_t>(amp * ((1 - alpha) * sample1 + alpha * sample2));
-      // printf("L sample1, sample2, result = %d, %d, %d\n", sample1, sample2, result);
-      _buf[0] = result & 0xff;
-      _buf[1] = result >> 8;
-      // R
-      sample1 = *(reinterpret_cast<int16_t*>(&_pSoundSource->buf[4 * i1 + 2]));
-      sample2 = *(reinterpret_cast<int16_t*>(&_pSoundSource->buf[4 * i2 + 2]));
-      result = static_cast<int16_t>(amp * ((1 - alpha) * sample1 + alpha * sample2));
-      _buf[2] = result & 0xff;
-      _buf[3] = result >> 8;
-
-      return _buf;
-    }
-  }
-  _buf[0] = 0;
-  _buf[1] = 0;
-  _buf[2] = 0;
-  _buf[3] = 0;
-  return _buf;
 }
