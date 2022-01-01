@@ -51,7 +51,8 @@ class JointSoundClass {
     /// @param pWheel 音源になる車輪を指すポインタ
     /// @param pSoundSource 再生する音源を指すポインタ
     /// @param height 音源(レール上面を仮定)から聴取点までの距離 [m]
-    PlayerClass(JointClass* pJoint, WheelClass* pWheel, SoundSourceClass* pSoundSource, float height);
+    /// @param volume 再生音量(0-32767)
+    PlayerClass(JointClass* pJoint, WheelClass* pWheel, SoundSourceClass* pSoundSource, float height, int volume);
     PlayerClass(const PlayerClass& obj);
 
     ~PlayerClass();
@@ -73,6 +74,7 @@ class JointSoundClass {
     WheelClass* _pWheel;              // 生成対象の車輪
     SoundSourceClass* _pSoundSource;  // 再生する音源
     float _height;                    // 音源(レール上面を仮定)から聴取点までの距離 [m]
+    int _volume;  // 音量(0-32767)
 
     uint8_t _buf[4];  // 1サンプルぶんのPCMデータを保存するバッファ. 符号付16bit整数で、先頭16bitが L, 後方16bitが R.
 
@@ -84,6 +86,7 @@ class JointSoundClass {
 
   const float _height;   // distance from sound source to listening point [m]
   const bool _loopback;  // joint loopback enable flag
+  int _volume;  // 音量(0-32767);
 
   std::vector<SoundSourceClass> _soundVector;
   std::deque<JointClass> _jointDeque;
@@ -125,9 +128,15 @@ class JointSoundClass {
   /// @param volume   [省略可] 音量を変える場合に設定. 振幅を何倍するか.
   int addWheel(float postion, float pitch = 1.0, float volume = 1.0);
 
+  /// @brief 音量を設定する
+  /// @param[in] volume 音量(0-32767)
+  /// @retval 1:success, 0:fail
+  int setVolume(int volume);
+
   /// @brief ある速度における音データをsize[bytes]ぶん生成する
   /// @param buf  buffer to be filled with PCM data stream
   /// @param size size(in bytes) of data block to be copied to buf. -1 is an indication to user that data buffer shall be flushed
+  /// @param speed an array of speed recorded at each sample point. array length must be (size/4).
   /// @retval 1:success, 0:fail
-  int generateSound(uint8_t* buf, int size, float speed);
+  int generateSound(uint8_t* buf, int size, float* speed);
 };
