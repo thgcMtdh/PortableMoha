@@ -62,14 +62,14 @@ void debug_setup() {
   jointSound.addWheel(CAR_L - CAR_D / 2 - CAR_W / 2 - PERSON_POS, 1.0, ALPHA_WALL);
   jointSound.addWheel(CAR_L - CAR_D / 2 + CAR_W / 2 - PERSON_POS, 1.0, ALPHA_WALL);
 
-  jointSound.setVolume(15000);
+  jointSound.setVolume(8000);
 
   // --- VVVF音 ---
-  vvvfSound.setVolume(10000);
+  vvvfSound.setVolume(2000);
   vvvfSound.setCutoffFreq(1000);
 
   // --- モーター音 ---
-  motorSound.setVolume(10000);
+  motorSound.setVolume(2000);
   motorSound.setEngagementPlay(true);
 
   // 音を出してみる
@@ -92,7 +92,6 @@ void debug_setup() {
     output[i] += buf[i];
   }
 
-  /*
   jointSound.generateSound(buf, outSize, speed);
   for (int i=0; i < outSize; i++) {
     output[i] += buf[i];
@@ -105,7 +104,7 @@ void debug_setup() {
   vvvfSound.generateSound(buf, outSize, speed);
   for (int i=0; i < outSize; i++) {
     output[i] += buf[i];
-  }*/
+  }
 
   fp = fopen("out.raw", "wb");
   fwrite(output, 1, outSize, fp);
