@@ -117,9 +117,9 @@ int VVVFSoundClass::generateSound(uint8_t* buf, int size, float* fs) {
     _invLineV[0] = _invPhaseV[0] - _invPhaseV[1];
     _invLineV[1] = _invPhaseV[1] - _invPhaseV[2];
     // _invLineV[2] = _invPhaseV[2] - _invPhaseV[0];
-    // ローパスフィルタを通して出力
-    *pResultL = _firstLPF0.update(_invLineV[0] * _volume, T_SAMPLE);
-    *pResultR = _firstLPF1.update(_invLineV[1] * _volume, T_SAMPLE);
+    // 出力(LPFを通さない方が、ジョイント音と合わせた際に綺麗)
+    *pResultL = _invLineV[0] * _volume;  //_firstLPF0.update(_invLineV[0] * _volume, T_SAMPLE);
+    *pResultR = _invLineV[1] * _volume;  // _firstLPF1.update(_invLineV[1] * _volume, T_SAMPLE);
   }
   return 1;
 }
