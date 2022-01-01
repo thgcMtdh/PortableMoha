@@ -3,6 +3,7 @@
 #include "CarDataClass.h"
 #include "JointSoundClass.h"
 #include "VVVFSoundClass.h"
+#include "MotorSoundClass.h"
 
 // 車両定数
 const float CAR_L = 20.0;      // 車両長[m]
@@ -14,6 +15,7 @@ const float ALPHA_WALL = 0.4;  // 壁の向こうの車輪からの音は何倍�
 
 CarDataClass carData;
 JointSoundClass jointSound(EAR_HEIGHT, true);
+MotorSoundClass motorSound(carData);
 VVVFSoundClass vvvfSound(carData);
 
 void printBuf(uint8_t* buf, int SAMPLENUM) {
@@ -66,8 +68,11 @@ void debug_setup() {
   vvvfSound.setVolume(10000);
   vvvfSound.setCutoffFreq(1000);
 
+  // --- モーター音 ---
+  motorSound.setVolume(10000);
+
   // 音を出してみる
-  float duration = 40.0;
+  float duration = 30.0;
   size_t outSize = duration * SAMPLINGRATE * 4;
   uint8_t* buf = new uint8_t[outSize];
   uint8_t* output = new uint8_t[outSize];
@@ -75,12 +80,18 @@ void debug_setup() {
   for (int i = 0; i < outSize; i++) {
     buf[i] = 0x0;
     output[i] = 0x0;
-    speed[i/4] = T_SAMPLE * i/4  * carData._acc0;
+    speed[i/4] = T_SAMPLE * i/4  * carData._acc0 + 1;
     if (speed[i/4] > 80.0) {
       speed[i/4] = 80.0;
     }
   }
-  
+
+  motorSound.generateSound(buf, outSize, speed);
+  for (int i=0; i < outSize; i++) {
+    output[i] += buf[i];
+  }
+
+  /*
   jointSound.generateSound(buf, outSize, speed);
   for (int i=0; i < outSize; i++) {
     output[i] += buf[i];
@@ -93,7 +104,7 @@ void debug_setup() {
   vvvfSound.generateSound(buf, outSize, speed);
   for (int i=0; i < outSize; i++) {
     output[i] += buf[i];
-  }
+  }*/
 
   fp = fopen("out.raw", "wb");
   fwrite(output, 1, outSize, fp);

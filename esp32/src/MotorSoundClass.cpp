@@ -51,7 +51,7 @@ int MotorSoundClass::generateSound(uint8_t* buf, int size, float* speed) {
     int16_t* pResultR = reinterpret_cast<int16_t*>(&buf[4*i+2]);
 
     // 出力
-    *pResultL = output * (_volume / 32767.0);
+    *pResultL = output * _volume;
     *pResultR = *pResultL;
   }
   return 1;
