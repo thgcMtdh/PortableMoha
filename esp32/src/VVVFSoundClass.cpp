@@ -53,7 +53,7 @@ int VVVFSoundClass::generateSound(uint8_t* buf, int size, float* speed) {
 
   // size/4個分のサンプルを生成する
   for (size_t i = 0; i < size / 4; i++) {
-    float fs = speed[i] * coeffSpdToFs;
+    float fs = speed[i] * coeffSpdToFs + 2.0;  // すべり周波数として2.0を付加
 
     // 信号波位相を計算
     _phaseSin[2] += fs * T_SAMPLE;  // 位相をサンプリング時間分進める
@@ -67,7 +67,7 @@ int VVVFSoundClass::generateSound(uint8_t* buf, int size, float* speed) {
     if (fs > _carData._modulationMaxFreq) {
       _Vs = _carData._modulationMax;  // 最大電圧に達する周波数を超えている場合
     } else {
-      _Vs = _carData._modulationMax * fs / _carData._modulationMaxFreq;  // V/f一定で上昇
+      _Vs = 0.03 + 0.97 * _carData._modulationMax * fs / _carData._modulationMaxFreq;  // V/f一定で上昇.ブーストを3%とる
     }
 
     // 現在の周波数におけるパルスモードを取得

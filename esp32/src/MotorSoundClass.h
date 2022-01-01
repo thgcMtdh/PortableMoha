@@ -9,9 +9,9 @@
 class MotorSoundClass {
 private:
   const CarDataClass& _carData;
-  float _phaseLargeGear;  // 大歯車の回転角(0 to 1)
-  float _phaseSmallGear;  // 小歯車の回転角(0 to 1)
-  float _phaseEngage;  // 噛み合い周波数の位相角(0 to 1)
+  float _phaseLargeGear;  // 大歯車の回転角(0 to 2pi)
+  float _phaseSmallGear;  // 小歯車の回転角(0 to 2pi)
+  float _phaseEngage;  // 噛み合い周波数の位相角(0 to 2pi)
 
   int _volume;  // 音量(0-32767)
 
@@ -47,7 +47,9 @@ private:
   /// @brief のこぎり波生成
   /// @param[in] phase 位相(0 to 1)
   /// @retval amp 波形の瞬時値. (-1 to 1)
-  inline float sawTooth(const float phase) {
+  inline float sawTooth(float phase) {
+    while (phase < 0.0) {phase += 1.0;}  // 0以上にする
+    while (phase > 1.0) {phase -= 1.0;}  // 1以下にする
     return phase * 2.0 - 1.0;
     // return sin(phase) + 1.0/2.0*sin(2*phase) + 1.0/4.0*sin(3*phase) + 1.0/8.0*sin(4*phase);
   }

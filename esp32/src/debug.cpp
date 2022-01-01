@@ -18,6 +18,8 @@ JointSoundClass jointSound(EAR_HEIGHT, true);
 MotorSoundClass motorSound(carData);
 VVVFSoundClass vvvfSound(carData);
 
+FirstLPF firstLpfBeforeOutput;  // 出力前にLPFをかます
+
 void printBuf(uint8_t* buf, int SAMPLENUM) {
   for (int i = 0; i < SAMPLENUM; i++) {
     printf("%d, %d\n", *((int16_t*)&buf[4 * i]), *((int16_t*)&buf[4 * i + 2]));
@@ -70,18 +72,21 @@ void debug_setup() {
   jointSound.addWheel(CAR_L - CAR_D / 2 - CAR_W / 2 - PERSON_POS, 1.0, ALPHA_WALL);
   jointSound.addWheel(CAR_L - CAR_D / 2 + CAR_W / 2 - PERSON_POS, 1.0, ALPHA_WALL);
 
-  jointSound.setVolume(8000);
+  jointSound.setVolume(10000);
 
   // --- VVVF音 ---
-  vvvfSound.setVolume(2000);
+  vvvfSound.setVolume(4000);
   vvvfSound.setCutoffFreq(1000);
 
   // --- モーター音 ---
   motorSound.setVolume(2000);
   motorSound.setEngagementPlay(true);
 
+  // --- LPF ---
+  firstLpfBeforeOutput.setTau(1.0/10000.0);
+
   // 音を出してみる
-  float duration = 30.0;
+  float duration = 60.0;
   size_t outSize = duration * SAMPLINGRATE * 4;
   uint8_t* buf = new uint8_t[outSize];
   uint8_t* output = new uint8_t[outSize];
@@ -90,8 +95,8 @@ void debug_setup() {
     buf[i] = 0x0;
     output[i] = 0x0;
     speed[i/4] = T_SAMPLE * i/4  * carData._acc0 + 1;
-    if (speed[i/4] > 80.0) {
-      speed[i/4] = 80.0;
+    if (speed[i/4] > 100.0) {
+      speed[i/4] = 100.0;
     }
   }
 
@@ -103,6 +108,11 @@ void debug_setup() {
 
   vvvfSound.generateSound(buf, outSize, speed);
   addPCMBuf(buf, output, outSize);
+
+  for (size_t i = 0; i < outSize/4; i++) {
+    *((int16_t*)&output[4*i]) = firstLpfBeforeOutput.update(*((int16_t*)&output[4*i]), T_SAMPLE);  // L
+    *((int16_t*)&output[4*i+2]) = firstLpfBeforeOutput.update(*((int16_t*)&output[4*i+2]), T_SAMPLE);  // R
+  }
 
   fp = fopen("out.raw", "wb");
   fwrite(output, 1, outSize, fp);

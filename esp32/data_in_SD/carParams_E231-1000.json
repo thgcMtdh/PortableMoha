@@ -1,0 +1,18 @@
+{
+    "name": "E231系近郊型",
+    "wheelDiameter": 0.86,
+    "smallGear": 14,
+    "largeGear": 99,
+    "pole": 4,
+    "acc0": 2.3,
+    "brk0": -4.5,
+    "regenLostFreq": 1.0,
+    "modulationMax": 1.0,
+    "modulationMaxFreq": 74.0,
+    "pulseMode": [
+        {"fs": 0, "mode": 0, "fc1": 1050, "fc2": 1050, "frand1":0, "frand2":0},
+        {"fs": 23.0, "mode": 0, "fc1": 1050, "fc2": 700, "frand1":0, "frand2":0},
+        {"fs": 48.0, "mode": 0, "fc1": 700, "fc2": 1800, "frand1":0, "frand2":0},
+        {"fs": 59.0, "mode": 1, "Npulse": 3}
+    ]
+}
