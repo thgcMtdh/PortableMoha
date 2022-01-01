@@ -47,13 +47,16 @@ int VVVFSoundClass::setCutoffFreq(float fcutoff) {
   return 1;
 }
 
-int VVVFSoundClass::generateSound(uint8_t* buf, int size, float* fs) {
+int VVVFSoundClass::generateSound(uint8_t* buf, int size, float* speed) {
+  // speed から fs へ換算する係数
+  float coeffSpdToFs = 1.0/3.6 / (PI*_carData._wheelDiameter) * (_carData._largeGear/_carData._smallGear) * _carData._pole/2;
 
   // size/4個分のサンプルを生成する
   for (size_t i = 0; i < size / 4; i++) {
+    float fs = speed[i] * coeffSpdToFs;
 
     // 信号波位相を計算
-    _phaseSin[2] += fs[i] * T_SAMPLE;  // 位相をサンプリング時間分進める
+    _phaseSin[2] += fs * T_SAMPLE;  // 位相をサンプリング時間分進める
     _phaseSin[1] = _phaseSin[2] + 1.0/3.0;
     _phaseSin[0] = _phaseSin[2] + 2.0/3.0;
     _phaseSin[0] -= (int)_phaseSin[0];  // 整数部を引いて0から1に収める
@@ -61,14 +64,14 @@ int VVVFSoundClass::generateSound(uint8_t* buf, int size, float* fs) {
     _phaseSin[2] -= (int)_phaseSin[2];
 
     // 信号波電圧を計算
-    if (fs[i] > _carData._modulationMaxFreq) {
+    if (fs > _carData._modulationMaxFreq) {
       _Vs = _carData._modulationMax;  // 最大電圧に達する周波数を超えている場合
     } else {
-      _Vs = _carData._modulationMax * fs[i] / _carData._modulationMaxFreq;  // V/f一定で上昇
+      _Vs = _carData._modulationMax * fs / _carData._modulationMaxFreq;  // V/f一定で上昇
     }
 
     // 現在の周波数におけるパルスモードを取得
-	  size_t pmIndexRef = getPulsemodeIndex(fs[i]);
+	  size_t pmIndexRef = getPulsemodeIndex(fs);
 
     // U,V,Wの各相について、パルスモードを変更
     for (size_t i_p = 0; i_p < 3; i_p++) {
@@ -90,7 +93,7 @@ int VVVFSoundClass::generateSound(uint8_t* buf, int size, float* fs) {
     // 非同期の相が1つ以上ある場合、非同期キャリアを計算
     for (size_t i_p = 0; i_p < 3; i_p++) {
       if (_carData._listMode[_pmIndex[i_p]] == ASYNC) {
-        calcAsyncTriangle(fs[i], _pmIndex[i_p]);
+        calcAsyncTriangle(fs, _pmIndex[i_p]);
         break;
       }
     }

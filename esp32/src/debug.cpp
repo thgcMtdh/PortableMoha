@@ -101,10 +101,6 @@ void debug_setup() {
   jointSound.generateSound(buf, outSize, speed);
   addPCMBuf(buf, output, outSize);
 
-  for (int i = 0; i < outSize/4; i++) {
-    // speed を fs に変換: m/sに直す->車輪回転数に変換->小歯車回転数に変換->信号波周波数へ
-    speed[i] *= 1.0/3.6/(PI*carData._wheelDiameter) * (carData._largeGear/carData._smallGear) * carData._pole/2;
-  }
   vvvfSound.generateSound(buf, outSize, speed);
   addPCMBuf(buf, output, outSize);
 
