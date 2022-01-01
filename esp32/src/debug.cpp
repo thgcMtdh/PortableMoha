@@ -24,6 +24,14 @@ void printBuf(uint8_t* buf, int SAMPLENUM) {
   }
 }
 
+// srcの中身を、int16_t型だと思ってlen(bytes)ぶんdstに加える
+inline void addPCMBuf(uint8_t* srcBuf, uint8_t* dstBuf, size_t len) {
+  for (size_t i=0; i < len/4; i++) {
+    *((int16_t*)&dstBuf[4*i  ]) += *((int16_t*)&srcBuf[4*i  ]);  // L
+    *((int16_t*)&dstBuf[4*i+2]) += *((int16_t*)&srcBuf[4*i+2]);  // R
+  }
+}
+
 void debug_setup() {
   char carDataPath[] = "/carParams_tobu100.json";
   carData.setCarDataFromFile(carDataPath);
@@ -88,23 +96,17 @@ void debug_setup() {
   }
 
   motorSound.generateSound(buf, outSize, speed);
-  for (int i=0; i < outSize; i++) {
-    output[i] += buf[i];
-  }
+  addPCMBuf(buf, output, outSize);
 
   jointSound.generateSound(buf, outSize, speed);
-  for (int i=0; i < outSize; i++) {
-    output[i] += buf[i];
-  }
+  addPCMBuf(buf, output, outSize);
 
   for (int i = 0; i < outSize/4; i++) {
     // speed を fs に変換: m/sに直す->車輪回転数に変換->小歯車回転数に変換->信号波周波数へ
     speed[i] *= 1.0/3.6/(PI*carData._wheelDiameter) * (carData._largeGear/carData._smallGear) * carData._pole/2;
   }
   vvvfSound.generateSound(buf, outSize, speed);
-  for (int i=0; i < outSize; i++) {
-    output[i] += buf[i];
-  }
+  addPCMBuf(buf, output, outSize);
 
   fp = fopen("out.raw", "wb");
   fwrite(output, 1, outSize, fp);
