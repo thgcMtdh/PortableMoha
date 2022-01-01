@@ -13,7 +13,7 @@ const float EAR_HEIGHT = 2.0;  // レール面(音源)から耳までの距離[m
 const float ALPHA_WALL = 0.2;  // 壁の向こうの車輪からの音は何倍になるか
 
 CarDataClass carData;
-// JointSoundClass jointSound(EAR_HEIGHT, true);
+JointSoundClass jointSound(EAR_HEIGHT, true);
 VVVFSoundClass vvvfSound(carData);
 
 void printBuf(uint8_t* buf, int SAMPLENUM) {
@@ -25,9 +25,9 @@ void printBuf(uint8_t* buf, int SAMPLENUM) {
 void debug_setup() {
   char carDataPath[] = "/carParams_tobu100.json";
   carData.setCarDataFromFile(carDataPath);
-  /*
+  
+  // --- ジョイント音 ---
   // 音源の追加
-
 #ifdef ARDUINO_ARCH_ESP32
   // ESP32でSDカードから読み込む場合の処理
 #else
@@ -43,7 +43,6 @@ void debug_setup() {
   fread(data, 1, dataSize, fp);
   fclose(fp);
 #endif
-
   jointSound.addSoundSource(0, 24.9, 12.0, 0.5, 1.0, data, dataSize);
 
   // ジョイントの追加
@@ -60,30 +59,44 @@ void debug_setup() {
   jointSound.addWheel(CAR_D / 2 + CAR_W / 2 - PERSON_POS, 0.97, 1.0);
   jointSound.addWheel(CAR_L - CAR_D / 2 - CAR_W / 2 - PERSON_POS, 1.0, ALPHA_WALL);
   jointSound.addWheel(CAR_L - CAR_D / 2 + CAR_W / 2 - PERSON_POS, 1.0, ALPHA_WALL);
-*/
+
+  // --- VVVF音 ---
+  vvvfSound.setVolume(10000);
+  vvvfSound.setCutoffFreq(1000);
+
   // 音を出してみる
   float duration = 20.0;
   size_t outSize = duration * SAMPLINGRATE * 4;
+  uint8_t* buf = new uint8_t[outSize];
   uint8_t* output = new uint8_t[outSize];
-  float* fs = new float[outSize/4];
+  float* speed = new float[outSize/4];
   for (int i = 0; i < outSize; i++) {
+    buf[i] = 0x0;
     output[i] = 0x0;
-    fs[i/4] = T_SAMPLE * i/4  * carData._acc0 * 1.3;
+    speed[i/4] = 32.0; // T_SAMPLE * i/4  * carData._acc0 * 1.3;
   }
-  // jointSound.generateSound(output, outSize, speed);
-  // printf("output=\n");
-  // printBuf(output, outSize/4);
-  vvvfSound.setVolume(10000);
-  vvvfSound.setCutoffFreq(1000);
-  vvvfSound.generateSound(output, outSize, fs);
+  
+  jointSound.generateSound(buf, outSize, speed[0]);
+  for (int i=0; i < outSize; i++) {
+    output[i] += buf[i];
+  }
 
-  FILE* fp = fopen("out.raw", "wb");
+  for (int i = 0; i < outSize/4; i++) {
+    // speed を fs に変換: m/sに直す->車輪回転数に変換->小歯車回転数に変換->信号波周波数へ
+    speed[i] *= 1.0/3.6/(PI*carData._wheelDiameter) * (carData._largeGear/carData._smallGear) * carData._pole/2;
+  }
+  vvvfSound.generateSound(buf, outSize, speed);
+  for (int i=0; i < outSize; i++) {
+    output[i] += buf[i];
+  }
+
+  fp = fopen("out.raw", "wb");
   fwrite(output, 1, outSize, fp);
   fclose(fp);
 
   // delete data;
   delete output;
-  delete fs;
+  delete speed;
   
 }
 
